@@ -1,0 +1,22 @@
+[package]
+name = "ripinfo"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release.build-override]
+opt-level = "s"
+incremental = true
+debug = 0
+
+
+[dependencies]
+anyhow = "1.0.69"
+colored_json = "3.0.1"
+directories = "4.0.1"
+flate2 = "1.0.25"
+reqwest = "0.11.14"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
