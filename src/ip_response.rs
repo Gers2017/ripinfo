@@ -67,6 +67,7 @@ pub struct Abuse {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Domains {
+    pub ip: Option<String>,
     pub total: u16,
     pub domains: Vec<String>,
 }

@@ -1,5 +1,6 @@
 use nom::{bytes::complete::*, character, IResult};
 
+#[derive(Debug)]
 pub struct IpAddress {
     pub octets: Vec<u8>,
     pub text: String,
@@ -7,11 +8,17 @@ pub struct IpAddress {
 
 pub fn parse_ip_address(input: &str) -> IResult<&str, IpAddress> {
     let (input, octets) = octet_line(input)?;
+    let list = octets
+        .clone()
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<_>>();
+
     Ok((
         input,
         IpAddress {
             octets,
-            text: input.to_string(),
+            text: list.join("."),
         },
     ))
 }

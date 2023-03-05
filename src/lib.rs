@@ -1,69 +1,52 @@
 pub mod ip_response;
 pub mod parser;
+mod ripinfo;
 
-use anyhow;
-use flate2::bufread::GzDecoder;
-use reqwest::Client;
-use std::io::prelude::*;
+pub use ripinfo::*;
 
-#[derive(Debug)]
-pub struct RipInfo {
-    pub url: String,
-    pub cookie: String,
-    pub client: Client,
-}
+pub mod cache {
+    use crate::ip_response::IpData;
+    use std::collections::HashMap;
+    pub type RipInfoCache = HashMap<String, IpData>;
+    use anyhow::anyhow;
+    use std::fs;
+    extern crate directories;
+    use directories::ProjectDirs;
 
-#[derive(Debug)]
-pub enum UserAgent {
-    Chrome,
-    Firefox,
-}
+    const QUALIFIER: &str = "com";
+    const ORGANIZATION: &str = "RipInfo";
+    const APPLICATION: &str = "ripinfo";
+    const CACHE_FILE: &str = "ripinfo.json";
 
-impl std::fmt::Display for UserAgent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            UserAgent::Chrome => String::from("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"),
-            UserAgent::Firefox => String::from("Mozilla/5.0 (Windows NT 10.0; rv:100.0) Gecko/20100101 Firefox/100.0"),
-        };
+    pub fn load_cache() -> anyhow::Result<RipInfoCache> {
+        let project_dirs = ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
+            .ok_or(anyhow!("error on project dirs"))?;
 
-        write!(f, "{}", s)
-    }
-}
+        let config_dir = project_dirs.config_dir();
 
-impl RipInfo {
-    pub fn new(url: &str, cookie: &str, user_agent: UserAgent) -> anyhow::Result<Self> {
-        let client = Client::builder()
-            .user_agent(user_agent.to_string())
-            .build()?;
+        if !&config_dir.exists() {
+            fs::create_dir(config_dir)?;
+        }
+        let mut cache_file = config_dir.to_path_buf();
+        cache_file.push(CACHE_FILE);
 
-        Ok(Self {
-            url: url.to_string(),
-            cookie: cookie.to_string(),
-            client,
-        })
+        match fs::read_to_string(&cache_file) {
+            Ok(text) => Ok(serde_json::from_str::<RipInfoCache>(&text)?),
+            Err(_e) => Ok(HashMap::new()),
+        }
     }
 
-    pub async fn fetch_api_data(&self) -> anyhow::Result<String> {
-        // make request with cookie and referer headers
-        let response = self
-            .client
-            .get(&self.url)
-            .header("Cookie", &self.cookie)
-            .header("Referer", "https://ipinfo.io/")
-            .header("Accept-Encoding", "gzip, deflate, br")
-            .header("Sec-Fetch-Mode", "cors")
-            .send()
-            .await?;
+    pub fn update_cache(cache: &RipInfoCache) -> anyhow::Result<()> {
+        let project_dir = ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
+            .ok_or(anyhow!("error on project dirs"))?;
 
-        dbg!(&response);
+        let mut cache_file = project_dir.config_dir().to_path_buf();
+        cache_file.push(CACHE_FILE);
 
-        // decompress gzip data
-        let bytes = response.bytes().await?;
-        let mut buffer = String::new();
-        let mut decoder = GzDecoder::new(&bytes[..]);
-        decoder.read_to_string(&mut buffer)?;
+        let json_str = serde_json::to_string(cache)?;
+        fs::write(&cache_file, json_str)?;
 
-        Ok(buffer)
+        Ok(())
     }
 }
 
@@ -71,9 +54,10 @@ pub fn print_usage() {
     println!(
         "{}",
         r#"USAGE: ripinfo [IP] [OPTIONS]...
-OPTIONS                 DESCRIPTION             VALUES
+OPTIONS                 DESCRIPTION
 --help                  Prints this message
---user-agent=[NAME]     Sets the user-agent     chrome, firefox
+--firefox               Sets the user-agent to firefox
+--edge                  Sets the user-agent to edge
 "#
     )
 }
