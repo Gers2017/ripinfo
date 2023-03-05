@@ -1,6 +1,7 @@
 pub mod ip_response;
+pub mod parser;
 
-use anyhow::{self};
+use anyhow;
 use flate2::bufread::GzDecoder;
 use reqwest::Client;
 use std::io::prelude::*;
@@ -64,4 +65,15 @@ impl RipInfo {
 
         Ok(buffer)
     }
+}
+
+pub fn print_usage() {
+    println!(
+        "{}",
+        r#"USAGE: ripinfo [IP] [OPTIONS]...
+OPTIONS                 DESCRIPTION             VALUES
+--help                  Prints this message
+--user-agent=[NAME]     Sets the user-agent     chrome, firefox
+"#
+    )
 }
