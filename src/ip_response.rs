@@ -14,8 +14,8 @@ pub struct IpData {
     pub city: String,
     pub country: String,
     pub loc: String,
-    pub postal: String,
-    pub timezone: String,
+    pub postal: Option<String>,
+    pub timezone: Option<String>,
     pub region: Option<String>,
     pub hostname: Option<String>,
     pub privacy: Option<Privacy>,
@@ -28,18 +28,18 @@ pub struct IpData {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Company {
-    pub name: String,
-    pub domain: String,
+    pub name: Option<String>,
+    pub domain: Option<String>,
     #[serde(rename = "type")]
-    pub type_: String,
+    pub type_: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Carrier {
-    pub name: String,
-    pub mcc: String,
-    pub mnc: String,
+    pub name: Option<String>,
+    pub mcc: Option<String>,
+    pub mnc: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -56,12 +56,12 @@ pub struct Privacy {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Abuse {
-    pub address: String,
-    pub country: String,
-    pub email: String,
-    pub name: String,
-    pub network: String,
-    pub phone: String,
+    pub address: Option<String>,
+    pub country: Option<String>,
+    pub email: Option<String>,
+    pub name: Option<String>,
+    pub network: Option<String>,
+    pub phone: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
