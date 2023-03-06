@@ -1,5 +1,5 @@
 use ripinfo::{
-    cache::{load_cache, update_cache},
+    config::{load_cache, update_cache},
     ip_response::{IpData, IpResponseBusiness},
     parser::parse_ip_address,
     print_usage, RipInfo, UserAgent,
@@ -22,7 +22,7 @@ async fn main() {
     match args.first().unwrap().as_ref() {
         "--help" => {
             print_usage();
-        }
+        },
         arg => {
             let user_agent = args
                 .get(1)
