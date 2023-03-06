@@ -11,13 +11,13 @@ pub struct IpResponseBusiness {
 #[serde(rename_all = "camelCase")]
 pub struct IpData {
     pub ip: String,
-    pub hostname: String,
     pub city: String,
-    pub region: String,
     pub country: String,
     pub loc: String,
     pub postal: String,
     pub timezone: String,
+    pub region: Option<String>,
+    pub hostname: Option<String>,
     pub privacy: Option<Privacy>,
     pub company: Option<Company>,
     pub carrier: Option<Carrier>,
