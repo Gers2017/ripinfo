@@ -1,8 +1,8 @@
 use crate::ip_response::IpData;
-use std::collections::HashMap;
-pub type RipInfoCache = HashMap<String, IpData>;
 use anyhow::anyhow;
+use std::collections::HashMap;
 use std::fs;
+use std::path::PathBuf;
 extern crate directories;
 use directories::ProjectDirs;
 
@@ -11,16 +11,22 @@ const ORGANIZATION: &str = "RipInfo";
 const APPLICATION: &str = "ripinfo";
 const CACHE_FILE: &str = "ripinfo.json";
 
-pub fn load_cache() -> anyhow::Result<RipInfoCache> {
-    let project_dirs = ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
-        .ok_or(anyhow!("error on project dirs"))?;
+pub type RipInfoCache = HashMap<String, IpData>;
 
-    let config_dir = project_dirs.config_dir();
+fn get_config_dir() -> anyhow::Result<PathBuf> {
+    let p = ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
+        .ok_or(anyhow!("error on project dirs"))?;
+    Ok(p.config_dir().to_owned())
+}
+
+pub fn load_cache() -> anyhow::Result<RipInfoCache> {
+    let config_dir = get_config_dir()?;
 
     if !&config_dir.exists() {
-        fs::create_dir(config_dir)?;
+        fs::create_dir(&config_dir)?;
     }
-    let mut cache_file = config_dir.to_path_buf();
+
+    let mut cache_file = config_dir;
     cache_file.push(CACHE_FILE);
 
     match fs::read_to_string(&cache_file) {
@@ -30,10 +36,7 @@ pub fn load_cache() -> anyhow::Result<RipInfoCache> {
 }
 
 pub fn update_cache(cache: &RipInfoCache) -> anyhow::Result<()> {
-    let project_dir = ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
-        .ok_or(anyhow!("error on project dirs"))?;
-
-    let mut cache_file = project_dir.config_dir().to_path_buf();
+    let mut cache_file = get_config_dir()?;
     cache_file.push(CACHE_FILE);
 
     let json_str = serde_json::to_string(cache)?;
@@ -41,4 +44,3 @@ pub fn update_cache(cache: &RipInfoCache) -> anyhow::Result<()> {
 
     Ok(())
 }
-
