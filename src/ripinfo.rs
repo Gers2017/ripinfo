@@ -1,47 +1,71 @@
-use anyhow;
+use anyhow::anyhow;
 use flate2::bufread::GzDecoder;
 use reqwest::Client;
 use std::io::prelude::*;
 
+use crate::{
+    config::RipInfoConfig,
+    ip_response::{IpData, IpResponseBusiness},
+};
+
 #[derive(Debug)]
 pub struct RipInfo {
-    pub url: String,
-    pub cookie: String,
     pub client: Client,
 }
 
 impl RipInfo {
-    pub fn new(url: &str, cookie: &str, user_agent: UserAgent) -> anyhow::Result<Self> {
+    pub fn new(user_agent: UserAgent) -> anyhow::Result<Self> {
         let client = Client::builder()
             .user_agent(user_agent.to_string())
             .build()?;
 
-        Ok(Self {
-            url: url.to_string(),
-            cookie: cookie.to_string(),
-            client,
-        })
+        Ok(Self { client })
     }
 
-    pub async fn fetch_api_data(&self) -> anyhow::Result<String> {
-        // make request with cookie and referer headers
-        let response = self
-            .client
-            .get(&self.url)
-            .header("Cookie", &self.cookie)
-            .header("Referer", "https://ipinfo.io/")
-            .header("Accept-Encoding", "gzip, deflate, br")
-            .header("Sec-Fetch-Mode", "cors")
-            .send()
-            .await?;
+    pub async fn fetch_api_data(&self, ip: &str, config: &RipInfoConfig) -> anyhow::Result<IpData> {
+        if config.use_token && config.token.is_none() {
+            return Err(anyhow!("Missing token inside ripinfo_config.json"));
+        }
 
-        // decompress gzip data
-        let bytes = response.bytes().await?;
-        let mut buffer = String::new();
-        let mut decoder = GzDecoder::new(&bytes[..]);
-        decoder.read_to_string(&mut buffer)?;
+        let data: IpData = if config.use_token {
+            let token = config.token.clone().unwrap();
+            let url = format!("https://ipinfo.io/{}/json?token={}", ip, &token);
 
-        Ok(buffer)
+            let response = self
+                .client
+                .get(url)
+                .header("Referer", "https://ipinfo.io/")
+                .header("Accept", "application/json")
+                .send()
+                .await?;
+            let text = response.text().await?;
+            serde_json::from_str::<IpData>(&text)?
+        } else {
+            let url = format!("https://ipinfo.io/widget/demo/{}", &ip);
+            let cookie_val = "flash=; jwt-express=eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4NzYwOTQsImVtYWlsIjoiR2VyczIwMTdAb3V0bG9vay5jb20iLCJjcmVhdGVkIjoiYSBmZXcgc2Vjb25kcyBhZ28oMjAyMy0wMy0wNFQxNzoxNzozOC4zMzJaKSIsInN0cmlwZV9pZCI6bnVsbCwiaWF0IjoxNjc3OTUwMjU4LCJleHAiOjE2ODA1NDIyNTh9.AXU025TfoTZ3WGHWsV_HSiR_Gvc7H9Q2Gqt0jKuDamxWp8PsFLgrcWPCxfKHvIReTQaDnUD4135NBX2rYBout_m7AHCBTzbeaPWpsDFHbO19tCzOBdU0tYxLbtZLdWxEUHUHMctvUXlktpsm4aqUAdgL75_6otp5a95iQ8HD21MwIT3e";
+
+            let response = self
+                .client
+                .get(url)
+                .header("Cookie", cookie_val)
+                .header("Referer", "https://ipinfo.io/")
+                .header("Accept", "application/json")
+                .header("Accept-Encoding", "gzip, deflate, br")
+                .header("Sec-Fetch-Mode", "cors")
+                .send()
+                .await?;
+
+            // decompress gzip data
+            let mut buffer = String::new();
+            let bytes = response.bytes().await?;
+            let mut decoder = GzDecoder::new(&bytes[..]);
+            let text = decoder.read_to_string(&mut buffer)?.to_string();
+
+            let ip_data = serde_json::from_str::<IpResponseBusiness>(&text).map(|it| it.data)?;
+            ip_data
+        };
+
+        Ok(data)
     }
 }
 

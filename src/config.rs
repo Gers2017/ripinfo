@@ -23,8 +23,8 @@ fn get_config_dir() -> anyhow::Result<PathBuf> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RipInfoConfig {
-    use_token: bool,
-    token: Option<String>,
+    pub use_token: bool,
+    pub token: Option<String>,
 }
 
 impl Default for RipInfoConfig {
