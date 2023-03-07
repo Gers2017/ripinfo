@@ -19,9 +19,30 @@ async fn main() {
         return;
     }
 
+    let config = RipInfoConfig::load_config();
+    if let Err(err) = config {
+        eprintln!("{}", err);
+        return;
+    }
+
+    let mut config = config.unwrap();
+
     match args.first().unwrap().as_ref() {
         "--help" => {
             print_usage();
+        }
+        "--show-token" => {
+            println!("{}", config);
+        }
+        "--show-use-token" => {
+            println!("{}", config.use_token);
+        }
+        "--toggle-token" => {
+            config.use_token = !config.use_token;
+            if let Err(err) = RipInfoConfig::save_config(&config) {
+                eprintln!("{}", err);
+            }
+            return;
         }
         arg => {
             let user_agent = args
@@ -33,16 +54,19 @@ async fn main() {
                 })
                 .unwrap_or_else(|| UserAgent::default());
 
-            if let Err(err) = handle_ip_command(arg, user_agent).await {
+            if let Err(err) = handle_ip_command(arg, user_agent, &config).await {
                 eprintln!("{}", err);
             }
         }
     };
 }
 
-async fn handle_ip_command(arg: &str, user_agent: UserAgent) -> anyhow::Result<()> {
+async fn handle_ip_command(
+    arg: &str,
+    user_agent: UserAgent,
+    config: &RipInfoConfig,
+) -> anyhow::Result<()> {
     let mut cache = load_cache()?;
-    let config = RipInfoConfig::load_config()?;
 
     let (_, ip) = parse_ip_address(&arg).map_err(|err| anyhow!("Invalid ip shape\n{}", err))?;
     // check cache

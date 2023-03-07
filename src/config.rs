@@ -6,6 +6,7 @@ use std::path::PathBuf;
 extern crate directories;
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 const QUALIFIER: &str = "com";
 const ORGANIZATION: &str = "RipInfo";
@@ -33,6 +34,17 @@ impl Default for RipInfoConfig {
             use_token: false,
             token: None,
         }
+    }
+}
+
+impl Display for RipInfoConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "use_token: {}\ntoken: {}",
+            self.use_token,
+            self.token.clone().unwrap_or_default()
+        )
     }
 }
 

@@ -29,13 +29,14 @@ impl RipInfo {
 
         let data: IpData = if config.use_token {
             let token = config.token.clone().unwrap();
-            let url = format!("https://ipinfo.io/{}/json?token={}", ip, &token);
+            let url = format!("https://ipinfo.io/{}/json", ip);
 
             let response = self
                 .client
                 .get(url)
                 .header("Referer", "https://ipinfo.io/")
                 .header("Accept", "application/json")
+                .header("Authorization", format!("Bearer {}", &token))
                 .send()
                 .await?;
             let text = response.text().await?;
