@@ -21,3 +21,5 @@ with the following content:
   "token": "<YOUT_ACCESS_TOKEN>"
 }
 ```
+
+![command gif](./resources/gif.gif)
