@@ -1,6 +1,6 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use flate2::bufread::GzDecoder;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use std::io::prelude::*;
 
 use crate::{
@@ -56,14 +56,28 @@ impl RipInfo {
                 .send()
                 .await?;
 
+            let status_code = response.status();
+            if status_code != StatusCode::OK {
+                // shortcut for: return Err(anyhow!())
+                bail!("Error: {}", status_code);
+            }
+
             // decompress gzip data
-            let mut buffer = String::new();
+            let mut text = String::new();
             let bytes = response.bytes().await?;
             let mut decoder = GzDecoder::new(&bytes[..]);
-            let text = decoder.read_to_string(&mut buffer)?.to_string();
+            decoder.read_to_string(&mut text)?;
 
-            let ip_data = serde_json::from_str::<IpResponseBusiness>(&text).map(|it| it.data)?;
-            ip_data
+            let ip_b_response = serde_json::from_str::<IpResponseBusiness>(&text)?;
+
+            if ip_b_response.error.is_some() {
+                bail!(ip_b_response.error.unwrap());
+            }
+
+            match ip_b_response.data {
+                Some(ip_data) => ip_data,
+                None => bail!(ip_b_response.error.unwrap()),
+            }
         };
 
         Ok(data)

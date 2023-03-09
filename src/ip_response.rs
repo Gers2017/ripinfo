@@ -4,16 +4,19 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct IpResponseBusiness {
     pub input: String,
-    pub data: IpData,
+    pub data: Option<IpData>,
+    pub error: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct IpData {
     pub ip: String,
-    pub city: String,
-    pub country: String,
-    pub loc: String,
+    pub city: Option<String>,
+    pub country: Option<String>,
+    pub loc: Option<String>,
+    pub bogon: Option<bool>,
+    pub readme: Option<String>,
     pub postal: Option<String>,
     pub timezone: Option<String>,
     pub region: Option<String>,
