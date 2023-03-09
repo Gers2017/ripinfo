@@ -1,6 +1,6 @@
 [package]
 name = "ripinfo"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "ripinfo is a tool to gather ip information using the ipinfo.io API"
 license = "MIT"
