@@ -2,8 +2,12 @@
 name = "ripinfo"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "ripinfo is a tool to gather ip information using the ipinfo.io API"
+license = "MIT"
+keywords = ["ip", "ipinfo", "cli", "ping", "whois"]
+categories = ["command-line-utilities", "network-programming"]
+homepage = "https://github.com/Gers2017/ripinfo"
+repository = "https://github.com/Gers2017/ripinfo"
 
 [profile.release.build-override]
 opt-level = "s"
